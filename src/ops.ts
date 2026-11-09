@@ -237,14 +237,16 @@ async function runSingle(ctx: Ctx, arm: SingleArm, op: OpRecord): Promise<void> 
   const seen = ctx.tracker.watch(rec.signature);
   let checked = true;
   if (!explicitlyRejected(rec)) {
-    while (seen.confirmedSlot === undefined && ctx.clock.blockHeight <= bh.lastValidBlockHeight + ctx.params.expiryMarginBlocks) {
-      await sleep(200);
-    }
+    const expired = () => ctx.clock.blockHeight > bh.lastValidBlockHeight + ctx.params.expiryMarginBlocks;
+    // Wall-clock guard in case block-height polling stalls; a blockhash lives roughly 60-90 s.
+    const guard = (rec.sentAtMs ?? Date.now()) + 180_000;
+    while (seen.confirmedSlot === undefined && !expired() && Date.now() < guard) await sleep(200);
     if (seen.confirmedSlot === undefined) {
-      // The blockhash has expired, so this is final: one history search, then call it.
+      // Only final once the blockhash has provably expired: one history search, then call it.
       await ctx.tracker.finalCheck([rec.signature]).catch(() => {
         checked = false;
       });
+      if (!expired()) checked = false;
     }
   }
   applySeen(rec, seen);
@@ -284,11 +286,11 @@ async function resolveFamily(
 ): Promise<void> {
   let winner = await waitForConfirmedMember(ctx, op, t0 + ctx.params.cancelAfterMs);
   if (!winner) {
-    await ctx.rpc.pacer.acquire();
+    await ctx.rpc.pacer.acquire(1);
     const c1 = newTx(ctx, op.op, "cancel", "rpc", lifetime, "c1");
     op.txs.push(c1.rec);
     await send(ctx, c1.rec, c1.wire);
-    await ctx.pacers.sender.acquire();
+    await ctx.pacers.sender.acquire(1);
     const c2 = newTx(ctx, op.op, "cancel", "sender-swqos", lifetime, "c2", senderTip(TIPS.swqos));
     op.txs.push(c2.rec);
     await send(ctx, c2.rec, c2.wire);
@@ -328,7 +330,7 @@ async function runLadder(ctx: Ctx, op: OpRecord): Promise<void> {
       const due = explicitlyRejected(r1.rec) || ctx.clock.slot >= (op.firstSentSlot ?? 0) + ctx.params.escalateAfterSlots;
       if (!stepped && due) {
         stepped = true;
-        await ctx.pacers.sender.acquire();
+        await ctx.pacers.sender.acquire(1);
         if (!familySeen(ctx, op)) {
           const r2 = newTx(ctx, op.op, "rung2", "sender", lifetime, "r2", senderTip(TIPS.senderMax));
           op.txs.push(r2.rec);

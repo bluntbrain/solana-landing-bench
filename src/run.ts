@@ -22,7 +22,7 @@ import { Rpc } from "./rpc.js";
 import { shuffle } from "./stats.js";
 import { BlockhashCache, SlotClock, StatusTracker } from "./tracker.js";
 import { buildTx, cuPriceFor, feeLamports, type Lifetime } from "./tx.js";
-import { loadOrCreateWallet, NONCE_REGISTRY } from "./wallet.js";
+import { loadOrCreateWallet, NONCE_QUARANTINE, NONCE_REGISTRY } from "./wallet.js";
 
 export interface RunOptions {
   perArm: number;
@@ -130,7 +130,7 @@ export async function run(opts: RunOptions): Promise<string | undefined> {
   };
 
   try {
-    const pool = new NoncePool(rpc, payer, clock, NONCE_REGISTRY);
+    const pool = new NoncePool(rpc, payer, clock, NONCE_REGISTRY, NONCE_QUARANTINE);
     if (needsNonce) {
       const { createdLamports } = await pool.ensure(opts.poolSize, { cuLimit: 5_000, cuPrice: cuPriceFor(10_000, 5_000) });
       log(`nonce pool ready: ${pool.slots.length} accounts (${sol(createdLamports)} SOL of refundable rent added)`);

@@ -27,7 +27,7 @@ async function main() {
           "per-arm": { type: "string", default: "100" },
           cap: { type: "string", default: "0.27" },
           arms: { type: "string", default: ARMS.join(",") },
-          concurrency: { type: "string", default: "16" },
+          concurrency: { type: "string", default: "10" },
           pool: { type: "string", default: "6" },
           "wait-min": { type: "string", default: "120" },
           out: { type: "string", default: "results" },
@@ -73,7 +73,12 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e instanceof Error ? e.message : e);
-  process.exit(1);
-});
+main()
+  .then(() => {
+    // Idle keep-alive sockets shouldn't hold the process open once the work is done.
+    setTimeout(() => process.exit(0), 2_000).unref();
+  })
+  .catch((e) => {
+    console.error(e instanceof Error ? e.message : e);
+    process.exit(1);
+  });

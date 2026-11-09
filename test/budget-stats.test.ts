@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { Budget } from "../src/budget.js";
+import { Pacer } from "../src/http.js";
 import { quantile, share, shuffle } from "../src/stats.js";
+
+test("pacer spaces requests and lets priority waiters go first", async () => {
+  const pacer = new Pacer(60);
+  await pacer.acquire();
+  const released: { who: string; at: number }[] = [];
+  const t0 = Date.now();
+  const normal = pacer.acquire().then(() => released.push({ who: "normal", at: Date.now() - t0 }));
+  const urgent = pacer.acquire(1).then(() => released.push({ who: "urgent", at: Date.now() - t0 }));
+  await Promise.all([normal, urgent]);
+  assert.deepEqual(released.map((r) => r.who), ["urgent", "normal"]);
+  assert.ok(released[1].at - released[0].at >= 55, `spacing was ${released[1].at - released[0].at} ms`);
+});
 
 test("budget books the worst case, settles to the actual cost, and stops at the cap", () => {
   const b = new Budget(1_000_000);

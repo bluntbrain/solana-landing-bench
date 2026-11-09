@@ -5,6 +5,7 @@ import { Keypair } from "@solana/web3.js";
 export const KEYS_DIR = path.resolve(process.env.BENCH_KEYS_DIR ?? "keys");
 export const WALLET_FILE = path.join(KEYS_DIR, "bench-wallet.json");
 export const NONCE_REGISTRY = path.join(KEYS_DIR, "nonce-accounts.json");
+export const NONCE_QUARANTINE = path.join(KEYS_DIR, "nonce-quarantine.json");
 
 export function loadOrCreateWallet(): Keypair {
   if (!fs.existsSync(WALLET_FILE)) {

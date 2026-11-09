@@ -28,7 +28,20 @@ export class NoncePool {
     private payer: Keypair,
     private clock: SlotClock,
     private registryFile: string,
+    private quarantineFile: string,
   ) {}
+
+  private quarantined(): Set<string> {
+    return new Set(fs.existsSync(this.quarantineFile) ? JSON.parse(fs.readFileSync(this.quarantineFile, "utf8")) : []);
+  }
+
+  /** Persisted across runs: a family with an unknown outcome may still land, so the account is never reused. */
+  private quarantine(slot: NonceSlot): void {
+    slot.quarantined = true;
+    const set = this.quarantined();
+    set.add(slot.pubkey.toBase58());
+    fs.writeFileSync(this.quarantineFile, JSON.stringify([...set], null, 2));
+  }
 
   private saveRegistry(): void {
     const known = new Set<string>(fs.existsSync(this.registryFile) ? JSON.parse(fs.readFileSync(this.registryFile, "utf8")) : []);
@@ -44,8 +57,10 @@ export class NoncePool {
   /** Reuse nonce accounts from earlier runs, then create enough to reach `size`. */
   async ensure(size: number, priority: { cuLimit: number; cuPrice: number }): Promise<{ createdLamports: number }> {
     const previous: string[] = fs.existsSync(this.registryFile) ? JSON.parse(fs.readFileSync(this.registryFile, "utf8")) : [];
+    const skip = this.quarantined();
     for (const addr of previous) {
       if (this.slots.length >= size) break;
+      if (skip.has(addr)) continue;
       const pubkey = new PublicKey(addr);
       const value = await this.fetchValue(pubkey);
       if (value) this.slots.push({ pubkey, value, busy: false, quarantined: false, readySlot: 0 });
@@ -93,22 +108,19 @@ export class NoncePool {
    * nonce has moved on: wait until the confirmed account shows the new value.
    */
   async release(slot: NonceSlot, oldValue: string, landed: boolean): Promise<void> {
-    if (!landed) {
-      slot.quarantined = true;
-      slot.busy = false;
-      return;
-    }
-    for (let i = 0; i < 60; i++) {
-      const value = await this.fetchValue(slot.pubkey).catch(() => null);
-      if (value && value !== oldValue) {
-        slot.value = value;
-        slot.readySlot = this.clock.slot + 2;
-        slot.busy = false;
-        return;
+    if (landed) {
+      for (let i = 0; i < 60; i++) {
+        const value = await this.fetchValue(slot.pubkey).catch(() => null);
+        if (value && value !== oldValue) {
+          slot.value = value;
+          slot.readySlot = this.clock.slot + 2;
+          slot.busy = false;
+          return;
+        }
+        await sleep(250);
       }
-      await sleep(250);
     }
-    slot.quarantined = true;
+    this.quarantine(slot);
     slot.busy = false;
   }
 }

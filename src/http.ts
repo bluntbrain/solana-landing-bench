@@ -42,21 +42,41 @@ export const postJson = (url: string, body: unknown, timeoutMs = 10_000) =>
 
 export const getJson = (url: string, timeoutMs = 10_000) => request(url, { method: "GET" }, timeoutMs);
 
-/** Enforces a minimum spacing between requests that share a rate limit. */
+/**
+ * Enforces a minimum spacing between requests that share a rate limit. Waiters with a
+ * higher priority go first (a ladder's step-up or a cancel shouldn't queue behind new work).
+ */
 export class Pacer {
-  private next = 0;
+  private queue: { priority: number; resolve: () => void }[] = [];
+  private last = 0;
+  private timer?: NodeJS.Timeout;
+
   constructor(readonly intervalMs: number) {}
 
-  async acquire(): Promise<void> {
-    const now = Date.now();
-    const at = Math.max(now, this.next);
-    this.next = at + this.intervalMs;
-    if (at > now) await sleep(at - now);
+  acquire(priority = 0): Promise<void> {
+    return new Promise((resolve) => {
+      this.queue.push({ priority, resolve });
+      this.pump();
+    });
   }
 
   /** Push the next slot back, e.g. after a 429. */
   backoff(ms: number): void {
-    this.next = Math.max(this.next, Date.now() + ms);
+    this.last = Math.max(this.last, Date.now() + ms - this.intervalMs);
+  }
+
+  private pump(): void {
+    if (this.timer || this.queue.length === 0) return;
+    const wait = Math.max(0, this.last + this.intervalMs - Date.now());
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      let best = 0;
+      for (let i = 1; i < this.queue.length; i++) if (this.queue[i].priority > this.queue[best].priority) best = i;
+      const [next] = this.queue.splice(best, 1);
+      this.last = Date.now();
+      next.resolve();
+      this.pump();
+    }, wait);
   }
 }
 
