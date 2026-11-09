@@ -1,0 +1,29 @@
+{
+  "name": "solana-landing-bench",
+  "version": "1.0.0",
+  "description": "Cost per landed transaction on Solana: plain RPC vs Helius Sender tiers vs Jito vs a durable-nonce ladder",
+  "scripts": {
+    "test": "RUST_LOG=error node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p .",
+    "wallet": "tsx src/cli.ts wallet",
+    "bench": "tsx src/cli.ts run",
+    "report": "tsx src/cli.ts report",
+    "sweep": "tsx src/cli.ts sweep"
+  },
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@solana/web3.js": "^1.99.0",
+    "bs58": "^6.0.0",
+    "undici": "^7.30.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "solana-bankrun": "^0.4.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
