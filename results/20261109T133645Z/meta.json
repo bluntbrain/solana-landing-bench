@@ -1,0 +1,40 @@
+{
+  "runId": "20261109T133645Z",
+  "startedAt": "2026-11-09T14:10:50.669Z",
+  "endedAt": "2026-11-09T14:11:13.141Z",
+  "rpc": "https://api.mainnet-beta.solana.com",
+  "params": {
+    "targetPriorityLamports": 10000,
+    "escalateAfterSlots": 4,
+    "cancelAfterMs": 30000,
+    "giveUpAfterMs": 60000,
+    "expiryMarginBlocks": 5,
+    "cuLimit": 19700,
+    "cuPrice": 507615,
+    "jitoTipLamports": 10000,
+    "tips": {
+      "swqos": 5000,
+      "senderMid": 200000,
+      "senderMax": 1000000,
+      "jitoMin": 10000,
+      "jitoMax": 100000
+    },
+    "jitoTipFloorP50Lamports": 5000,
+    "cuMeasured": {
+      "blockhash memo": 14789,
+      "blockhash memo + tip": 14939,
+      "nonce memo": 14939,
+      "nonce memo + tip": 15089
+    },
+    "concurrency": 10,
+    "noncePool": 6
+  },
+  "perArm": 2,
+  "capLamports": 10000000,
+  "startBalance": 293540160,
+  "endBalance": 290900147,
+  "feeChecks": [
+    "On-chain spot check: 13/13 landed transactions matched the expected fee and payer debit."
+  ],
+  "notes": []
+}

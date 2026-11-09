@@ -65,11 +65,20 @@ export class Pacer {
     this.last = Math.max(this.last, Date.now() + ms - this.intervalMs);
   }
 
+  /**
+   * Record that a request actually went out now. A granted slot can be used late (a race
+   * waits for every path's slot before firing), and the spacing must count from the send.
+   */
+  touch(): void {
+    this.last = Math.max(this.last, Date.now());
+  }
+
   private pump(): void {
     if (this.timer || this.queue.length === 0) return;
     const wait = Math.max(0, this.last + this.intervalMs - Date.now());
     this.timer = setTimeout(() => {
       this.timer = undefined;
+      if (Date.now() < this.last + this.intervalMs) return this.pump(); // a send was recorded meanwhile
       let best = 0;
       for (let i = 1; i < this.queue.length; i++) if (this.queue[i].priority > this.queue[best].priority) best = i;
       const [next] = this.queue.splice(best, 1);

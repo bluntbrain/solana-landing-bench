@@ -169,6 +169,11 @@ export async function run(opts: RunOptions): Promise<string | undefined> {
       jitoTipAccounts,
     };
 
+    // Warm the connections so the first operations don't pay for TLS setup through the proxy.
+    await Promise.all([
+      getJson(ENDPOINTS.senderPing),
+      postJson(ENDPOINTS.jitoTipAccounts, { jsonrpc: "2.0", id: 1, method: "getTipAccounts", params: [] }),
+    ]);
     const startedAt = new Date().toISOString();
     const startBalance = await rpc.getBalance(me);
     const sem = new Semaphore(opts.concurrency);

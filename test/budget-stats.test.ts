@@ -16,6 +16,17 @@ test("pacer spaces requests and lets priority waiters go first", async () => {
   assert.ok(released[1].at - released[0].at >= 55, `spacing was ${released[1].at - released[0].at} ms`);
 });
 
+test("pacer counts from the actual send when a granted slot is used late", async () => {
+  const pacer = new Pacer(60);
+  await pacer.acquire();
+  const waiting = pacer.acquire(); // its timer is already scheduled from the grant
+  await new Promise((r) => setTimeout(r, 30));
+  pacer.touch(); // the first request only went out now
+  const t = Date.now();
+  await waiting;
+  assert.ok(Date.now() - t >= 55, `waited ${Date.now() - t} ms after the real send`);
+});
+
 test("budget books the worst case, settles to the actual cost, and stops at the cap", () => {
   const b = new Budget(1_000_000);
   assert.ok(b.canStart(600_000));

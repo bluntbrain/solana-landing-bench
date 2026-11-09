@@ -150,6 +150,7 @@ async function post(route: Route, wire: string) {
 /** Send once. The signature is watched before the request goes out, so a fast landing is never missed. */
 async function send(ctx: Ctx, rec: TxRecord, wire: string): Promise<void> {
   ctx.tracker.watch(rec.signature);
+  pacerFor(ctx, rec.route).touch();
   rec.sentAtMs = Date.now();
   rec.sentSlot = ctx.clock.slot;
   const r = await post(rec.route, wire);

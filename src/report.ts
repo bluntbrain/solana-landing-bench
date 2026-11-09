@@ -161,8 +161,18 @@ export function renderMarkdown(meta: RunMeta, ops: OpRecord[]): string {
   }
   const race = byArm.get("race");
   if (race) lines.push(`**Race:** wins by path: ${JSON.stringify(race.wins ?? {})}.`, "");
-  const other = [...byArm.values()].map((s) => `${s.arm}: ${s.notLanded} not landed, ${s.cancelled} cancelled, ${s.unknown} unknown, ${s.landedErr} landed-but-failed`);
-  lines.push("**Other outcomes:** " + other.join("; ") + ".", "");
+  const other = [...byArm.values()]
+    .map((s) => {
+      const parts = [
+        s.notLanded && `${s.notLanded} not landed`,
+        s.cancelled && `${s.cancelled} cancelled`,
+        s.unknown && `${s.unknown} unknown`,
+        s.landedErr && `${s.landedErr} landed but failed`,
+      ].filter(Boolean);
+      return parts.length ? `${s.arm}: ${parts.join(", ")}` : "";
+    })
+    .filter(Boolean);
+  lines.push(`**Other outcomes:** ${other.length ? other.join("; ") : "none"}.`, "");
 
   lines.push("## Decision rule", "");
   for (const v of decide(byArm)) lines.push(`- ${v.pass === undefined ? "⚪" : v.pass ? "✅" : "❌"} ${v.criterion}: ${v.detail}`);
