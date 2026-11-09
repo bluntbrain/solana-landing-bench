@@ -8,6 +8,7 @@ import type { OpRecord } from "./ops.js";
 import { renderMarkdown, sol, summaryJson, type RunMeta } from "./report.js";
 import { Rpc } from "./rpc.js";
 import { run } from "./run.js";
+import { buildShareReport } from "./share.js";
 import { loadOrCreateWallet } from "./wallet.js";
 
 const [command, ...rest] = process.argv.slice(2);
@@ -61,6 +62,12 @@ async function main() {
       fs.writeFileSync(path.join(dir, "summary.md"), renderMarkdown(meta, ops));
       fs.writeFileSync(path.join(dir, "summary.json"), JSON.stringify(summaryJson(ops), null, 2));
       console.log(fs.readFileSync(path.join(dir, "summary.md"), "utf8"));
+      return;
+    }
+    case "share": {
+      const [fullDir, smokeDir] = rest;
+      if (!fullDir) throw new Error("usage: share <results/FULL_RUN> [results/SMOKE_RUN]");
+      await buildShareReport(fullDir, smokeDir, "docs/report-template.md", "REPORT.md");
       return;
     }
     case "sweep": {

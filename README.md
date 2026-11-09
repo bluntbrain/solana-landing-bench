@@ -4,6 +4,7 @@ What does it cost to land a Solana transaction, by path and by tier? And does **
 
 This repo runs that comparison on mainnet with real SOL. It also proves locally, against the real Solana runtime, the property the step-up depends on.
 
+- **[REPORT.md](REPORT.md): the write-up to share, with every mainnet transaction linked and re-verified on-chain**
 - [PLAN.md](PLAN.md): arms, metrics, budget and the decision rule (fixed before running)
 - [docs/analysis.md](docs/analysis.md): the talk that prompted this, what checks out, and what to build
 - [results/](results/): one folder per run (`summary.md`, `summary.json`, `ops.jsonl`, `meta.json`)
@@ -78,6 +79,7 @@ npm run bench -- --dry-run                 # endpoint checks and a cost estimate
 npm run bench -- --per-arm 2 --cap 0.01    # smoke run
 npm run bench -- --per-arm 100 --cap 0.27  # full run
 npm run report -- results/<run-id>         # rebuild a summary
+npm run share -- results/<full> results/<smoke>  # rebuild REPORT.md, re-checking every signature on-chain
 npm run sweep                              # dry run: what would be closed and returned
 npm run sweep -- --yes                     # close nonce accounts, return leftovers to the funder
 ```

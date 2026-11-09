@@ -8,7 +8,8 @@
     "wallet": "tsx src/cli.ts wallet",
     "bench": "tsx src/cli.ts run",
     "report": "tsx src/cli.ts report",
-    "sweep": "tsx src/cli.ts sweep"
+    "sweep": "tsx src/cli.ts sweep",
+    "share": "tsx src/cli.ts share"
   },
   "type": "module",
   "private": "true",
