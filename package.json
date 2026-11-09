@@ -1,7 +1,7 @@
 {
   "name": "solana-landing-bench",
   "version": "1.0.0",
-  "description": "Cost per landed transaction on Solana: plain RPC vs Helius Sender tiers vs Jito vs a durable-nonce ladder",
+  "description": "What does a bigger tip buy? A mainnet benchmark of Solana transaction landing, with every transaction linked.",
   "scripts": {
     "test": "RUST_LOG=error node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p .",
