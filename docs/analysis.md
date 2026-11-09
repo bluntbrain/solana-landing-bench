@@ -69,3 +69,5 @@ The stronger angle is a **budget-aware landing layer**:
 - the actual cost of every operation, and cost per landed transaction per path.
 
 Measure first: this repo's benchmark compares cost per landed transaction across paths and tiers before anyone builds the router.
+
+**Measured on 2026-11-09** (see the README): on uncontended transactions, every path landed about 100%. Sender Max cost 50x more than SWQOS-only for no gain. A cheap-first ladder under one nonce matched Max's landing rate for 2% of the cost. Its 13 premature step-ups were dropped for free by the nonce, where a blind re-sign would have run them twice. Contention is still untested.
